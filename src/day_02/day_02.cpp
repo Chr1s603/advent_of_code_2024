@@ -1,92 +1,78 @@
 #include HEADER_NAME
 
-#include <iostream>
-#include <sstream>
+#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm/copy.hpp>
-#include <boost/range/algorithm/count.hpp>
-#include <boost/range/algorithm/sort.hpp>
-#include <boost/range/algorithm_ext/push_back.hpp>
-#include <boost/range/combine.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <boost/range/algorithm.hpp>
+#include <iostream>
+#include <sstream>
 
-namespace
-NAMESPACE_NAME {
-    std::vector<std::vector<int64_t> > parse_input(std::ifstream &s) {
-        std::vector<std::vector<int64_t> > res;
-        std::string line;
+namespace NAMESPACE_NAME {
+using Row    = std::vector<int64_t>;
+using Matrix = std::vector<Row>;
 
-        while (std::getline(s, line)) {
-            std::istringstream iss(line);
-            int64_t value;
-            std::vector<int64_t> row;
-            while (iss >> value)
-                row.push_back(value);
+Matrix
+parse_input (std::ifstream &s)
+{
+    Matrix      res;
+    std::string line;
 
-            res.push_back(std::move(row));
-        }
+    while (std::getline(s, line))
+    {
+        std::istringstream iss(line);
+        res.emplace_back(std::istream_iterator<int64_t>(iss),
+                         std::istream_iterator<int64_t>());
+    }
 
+    return res;
+}
+
+Row
+get_err_idxs (const Row &row, bool ascending)
+{
+    Row res;
+    if (row.size() < 2)
         return res;
-    }
 
-    std::vector<int64_t> get_err_idxs(const std::vector<int64_t> &row, const bool ascending) {
-        std::vector<int64_t> res;
-        if (row.size() >= 2) {
-            for (int64_t i = 0; i < row.size() - 1; ++i) {
-                const int64_t diff = std::abs(row[i] - row[i + 1]);
-                const bool to_far_apart = diff < 1 || diff > 3;
-                const bool should_be_ascending_but_is_not = ascending && row[i] > row[i + 1];
-                const bool should_be_descending_but_is_not = !ascending && row[i] < row[i + 1];
-                if (to_far_apart ||
-                    should_be_ascending_but_is_not ||
-                    should_be_descending_but_is_not) {
-                    res.push_back(i);
-                    res.push_back(i + 1);
-                }
-            }
+    for (size_t i = 0; i < row.size() - 1; ++i)
+    {
+        int64_t diff = std::abs(row[i] - row[i + 1]);
+        if (diff < 1 || diff > 3 || (ascending && row[i] > row[i + 1])
+            || (!ascending && row[i] < row[i + 1]))
+        {
+            res.push_back(i);
+            res.push_back(i + 1);
         }
-        return std::move(res);
     }
+    return res;
+}
 
-    int64_t
-    part1(const std::vector<std::vector<int64_t> > &in) {
-        int64_t safe_count{0};
-        for (const auto &row: in)
-            if (get_err_idxs(row, true).empty() || get_err_idxs(row, false).empty()) safe_count++;
-        return safe_count;
-    }
+int64_t
+part1 (const Matrix &in)
+{
+    return boost::count_if(in, [] (const Row &row) {
+        return get_err_idxs(row, true).empty() || get_err_idxs(row, false).empty();
+    });
+}
 
-    int64_t part2(const std::vector<std::vector<int64_t> > &in) {
-        int64_t safe_count{0};
-        for (const auto &row: in) {
-            const auto idxs_asc = get_err_idxs(row, true);
-            const auto idxs_desc = get_err_idxs(row, false);
-            if (idxs_asc.empty() || idxs_desc.empty()) {
-                safe_count++;
-            } else {
-                bool dampen_helped{false};
-                for (const auto &idx: idxs_asc) {
-                    std::vector<int64_t> row2 = row;
-                    row2.erase(row2.begin() + idx);
+int64_t
+part2 (const Matrix &in)
+{
+    return boost::count_if(in, [] (const Row &row) {
+        auto try_dampen = [&] (const Row &indices, const bool ascending) {
+            return std::ranges::any_of(indices, [&] (const int64_t idx) {
+                Row row2 = row;
+                row2.erase(row2.begin() + idx);
+                return get_err_idxs(row2, ascending).empty();
+            });
+        };
 
-                    if (get_err_idxs(row2, true).empty()) {
-                        dampen_helped = true;
-                        break;
-                    }
-                }
-                for (const auto &idx: idxs_desc) {
-                    std::vector<int64_t> row2 = row;
-                    row2.erase(row2.begin() + idx);
+        const auto idxs_asc  = get_err_idxs(row, true);
+        const auto idxs_desc = get_err_idxs(row, false);
 
-                    if (get_err_idxs(row2, false).empty()) {
-                        dampen_helped = true;
-                        break;
-                    }
-                }
-                if (dampen_helped) safe_count++;
-            }
-        }
-        return safe_count;
-    }
+        return idxs_asc.empty() || idxs_desc.empty() || try_dampen(idxs_asc, true)
+               || try_dampen(idxs_desc, false);
+    });
+}
+
 }

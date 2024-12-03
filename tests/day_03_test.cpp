@@ -2,9 +2,11 @@
 
 #include <gtest/gtest.h>
 
-TEST(Day01, Part1) {
+TEST(Day03, Part1)
+{
     std::ifstream input_file(INPUT_FILE_PATH);
-    if (!input_file) {
+    if (!input_file)
+    {
         std::cerr << "Failed to open input file " << INPUT_FILE_PATH << std::endl;
     }
 
@@ -12,9 +14,11 @@ TEST(Day01, Part1) {
     EXPECT_EQ(NAMESPACE_NAME::part1(input), 167090022);
 }
 
-TEST(Day01, Part2) {
+TEST(Day03, Part2)
+{
     std::ifstream input_file(INPUT_FILE_PATH);
-    if (!input_file) {
+    if (!input_file)
+    {
         std::cerr << "Failed to open input file " << INPUT_FILE_PATH << std::endl;
     }
 
