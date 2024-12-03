@@ -60,12 +60,10 @@ NAMESPACE_NAME {
     int64_t part2(const std::vector<std::vector<int64_t> > &in) {
         int64_t safe_count{0};
         for (const auto &row: in) {
-            std::cout << "- ROW ----------------" << std::endl;
             const auto idxs_asc = get_err_idxs(row, true);
             const auto idxs_desc = get_err_idxs(row, false);
             if (idxs_asc.empty() || idxs_desc.empty()) {
                 safe_count++;
-                std::cout << "VALID" << std::endl;
             } else {
                 bool dampen_helped{false};
                 for (const auto &idx: idxs_asc) {
@@ -73,7 +71,6 @@ NAMESPACE_NAME {
                     row2.erase(row2.begin() + idx);
 
                     if (get_err_idxs(row2, true).empty()) {
-                        std::cout << "VALID" << std::endl;
                         dampen_helped = true;
                         break;
                     }
@@ -83,7 +80,6 @@ NAMESPACE_NAME {
                     row2.erase(row2.begin() + idx);
 
                     if (get_err_idxs(row2, false).empty()) {
-                        std::cout << "VALID" << std::endl;
                         dampen_helped = true;
                         break;
                     }
