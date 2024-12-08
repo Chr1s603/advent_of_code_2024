@@ -10,38 +10,36 @@ namespace NAMESPACE_NAME {
 
 struct map
 {
-    enum class entity_t
-    {
-        nothing,
-        guard_n,
-        guard_e,
-        guard_s,
-        guard_w,
-        obstacle,
-
-        count
-    };
+    // clang-format off
+    enum class entity_t { nothing, guard_n, guard_e, guard_s, guard_w, obstacle };
     [[nodiscard]] static entity_t parse_field_entity (const char c)
     {
         switch (c)
         {
-            case '.':
-                return entity_t::nothing;
-            case '#':
-                return entity_t::obstacle;
-            case '^':
-                return entity_t::guard_n;
-            case '>':
-                return entity_t::guard_e;
-            case 'v':
-                return entity_t::guard_s;
-            case '<':
-                return entity_t::guard_w;
-            default:
-                assert(false);
-                return entity_t::nothing;
+            case '.': return entity_t::nothing;
+            case '#': return entity_t::obstacle;
+            case '^': return entity_t::guard_n;
+            case '>': return entity_t::guard_e;
+            case 'v': return entity_t::guard_s;
+            case '<': return entity_t::guard_w;
+            default: return entity_t::nothing;
         }
     }
+
+    static std::pair<int64_t, int64_t> get_next_pos (
+        const std::pair<int64_t, int64_t> &pos, const entity_t e)
+    {
+        const auto [row, col] = pos;
+        switch (e)
+        {
+            case entity_t::guard_n: return { row - 1, col };
+            case entity_t::guard_e: return { row, col + 1 };
+            case entity_t::guard_s: return { row + 1, col };
+            case entity_t::guard_w: return { row, col - 1 };
+            default: return { -1, -1 };
+        }
+    }
+    // clang-format on
 
     explicit map (const std::string &map_data)
     {
@@ -66,26 +64,6 @@ struct map
                         _field[row * _cols + col]))
                     return { row, col };
         return { -1, -1 };
-    }
-
-    static std::pair<int64_t, int64_t> get_next_pos (
-        const std::pair<int64_t, int64_t> &pos, const entity_t e)
-    {
-        const auto [row, col] = pos;
-        switch (e)
-        {
-            case entity_t::guard_n:
-                return { row - 1, col };
-            case entity_t::guard_e:
-                return { row, col + 1 };
-            case entity_t::guard_s:
-                return { row + 1, col };
-            case entity_t::guard_w:
-                return { row, col - 1 };
-            default:
-                assert(false);
-                return { -1, -1 };
-        }
     }
 
     bool guard_pos_oob (const std::pair<int64_t, int64_t> &pos) const
