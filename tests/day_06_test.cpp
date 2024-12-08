@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(Day04, Part1)
+TEST(Day06, Part1)
 {
     std::ifstream input_file(INPUT_FILE_PATH);
     if (!input_file)
@@ -12,7 +12,7 @@ TEST(Day04, Part1)
     EXPECT_EQ(NAMESPACE_NAME::part1(input), 5095);
 }
 
-TEST(Day04, Part2)
+TEST(Day06, Part2)
 {
     std::ifstream input_file(INPUT_FILE_PATH);
     if (!input_file)
