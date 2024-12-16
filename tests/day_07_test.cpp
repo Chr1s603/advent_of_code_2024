@@ -9,7 +9,7 @@ TEST(Day07, Part1)
         std::cerr << "Failed to open input file " << INPUT_FILE_PATH << std::endl;
 
     const auto input = NAMESPACE_NAME::parse_input(input_file);
-    EXPECT_EQ(NAMESPACE_NAME::part1(input), 0);
+    EXPECT_EQ(NAMESPACE_NAME::part1(input), 4998764814652);
 }
 
 TEST(Day07, Part2)
@@ -19,5 +19,5 @@ TEST(Day07, Part2)
         std::cerr << "Failed to open input file " << INPUT_FILE_PATH << std::endl;
 
     const auto input = NAMESPACE_NAME::parse_input(input_file);
-    EXPECT_EQ(NAMESPACE_NAME::part2(input), 0);
+    EXPECT_EQ(NAMESPACE_NAME::part2(input), 37598910447546);
 }
