@@ -1,11 +1,8 @@
 #include HEADER_NAME
 
-#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm/count_if.hpp>
 #include <cmath>
-#include <iostream>
 #include <ranges>
 
 using namespace std;
@@ -62,17 +59,66 @@ compact_disk (const disk_t &disk)
 disk_t
 compact_disk_no_fragmentation (const disk_t &disk)
 {
-    std::map<int64_t, int64_t> file_lengths;
-    for (const auto ch : disk)
-        if (ch >= 0)
-            file_lengths[ch]++;
-
-    disk_t res;
-    for (int64_t i = static_cast<int64_t>(file_lengths.size()) - 1; i > 0; i--)
+    map<int64_t, pair<size_t, size_t>> file_lengths; // file ID -> [start, length]
+    for (const auto &[i, block] : views::enumerate(disk))
     {
+        if (block >= 0)
+        {
+            if (!file_lengths.contains(block))
+                file_lengths[block] = make_pair(i, 1);
+            else
+                file_lengths[block].second++;
+        }
     }
 
-    return res;
+    auto calc_free_blocks = [] (const disk_t &d) {
+        vector<pair<size_t, size_t>> free_blocks;
+        size_t                       i = 0;
+        while (i < d.size())
+        {
+            if (d[i] == -1)
+            {
+                size_t start  = i;
+                size_t length = 0;
+                while (i < d.size() && d[i] == -1)
+                {
+                    ++i;
+                    ++length;
+                }
+                free_blocks.emplace_back(start, length);
+            }
+            else
+                ++i;
+        }
+        return free_blocks;
+    };
+
+    disk_t result = disk;
+    for (const auto &[file_id, start_len] : ranges::reverse_view(file_lengths))
+    {
+        const size_t file_start = start_len.first;
+        const size_t file_len   = start_len.second;
+
+        for (const auto free_blocks = calc_free_blocks(result);
+             const auto &[start, length] : free_blocks)
+        {
+            if (start >= file_start)
+                continue;
+
+            if (length >= file_len)
+            {
+                for (size_t i = 0; i < file_len; ++i)
+                    result[start + i] = file_id;
+
+                for (int64_t l = 0; l < file_len; ++l)
+                    result[file_start + l] = -1;
+
+                break;
+            }
+        }
+    }
+
+    return result;
 }
 
 int64_t
