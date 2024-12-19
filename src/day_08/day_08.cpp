@@ -56,8 +56,48 @@ int64_t x (const pos_t &p) { return get<0>(p); }
 int64_t y (const pos_t &p) { return get<1>(p); }
 // clang-format on
 
+int64_t
+in_bounds (const pos_t &p, const int64_t rows, const int64_t cols)
+{
+    return x(p) >= 0 && x(p) < cols && //
+           y(p) >= 0 && y(p) < rows;
+}
+
 antinodes_t
-gen_antinodes_inner (const vector<pos_t> &antenna_positions)
+gen_resonance_nodes (const pos_t &pos_a, const pos_t &pos_b, const int64_t rows,
+                     const int64_t cols, const bool resonance = false)
+{
+    const pos_t dist { x(pos_b) - x(pos_a), y(pos_b) - y(pos_a) };
+
+    antinodes_t res;
+    if (resonance)
+    {
+        res.emplace(pos_a);
+        res.emplace(pos_b);
+    }
+
+    const int64_t limit { resonance ? max(rows, cols) : 2ll };
+    for (int64_t i = 1; i < limit; i++)
+    {
+        const pos_t antinode_a { x(pos_a) - i * x(dist), y(pos_a) - i * y(dist) };
+        const pos_t antinode_b { x(pos_b) + i * x(dist), y(pos_b) + i * y(dist) };
+        const bool  a_in_bounds = in_bounds(antinode_a, rows, cols);
+        const bool  b_in_bounds = in_bounds(antinode_b, rows, cols);
+        if (a_in_bounds)
+            res.emplace(antinode_a);
+        if (b_in_bounds)
+            res.emplace(antinode_b);
+
+        if (!a_in_bounds && !b_in_bounds)
+            break;
+    }
+
+    return res;
+}
+
+antinodes_t
+gen_antinodes_inner (const vector<pos_t> &antenna_positions, const int64_t rows,
+                     const int64_t cols, const bool resonance = false)
 {
     antinodes_t res;
     for (int64_t i = 0; i < antenna_positions.size(); i++)
@@ -66,28 +106,20 @@ gen_antinodes_inner (const vector<pos_t> &antenna_positions)
             const pos_t pos_a { antenna_positions[i] };
             const pos_t pos_b { antenna_positions[j] };
             const pos_t dist { x(pos_b) - x(pos_a), y(pos_b) - y(pos_a) };
-            res.emplace(x(pos_a) - x(dist), y(pos_a) - y(dist));
-            res.emplace(x(pos_b) + x(dist), y(pos_b) + y(dist));
+            res.merge(gen_resonance_nodes(pos_a, pos_b, rows, cols, resonance));
         }
 
     return res;
 }
 
 antinodes_t
-gen_antinodes (const antenna_map &antennas)
+gen_antinodes (const antenna_map &antennas, const bool resonance = false)
 {
     antinodes_t res;
     for (const auto &a : antennas.map)
-        res.merge(gen_antinodes_inner(get<1>(a)));
-
-    antinodes_t in_bound_antinodes;
-    ranges::copy_if(res, inserter(in_bound_antinodes, in_bound_antinodes.end()),
-                    [antennas] (const pos_t &an) {
-                        return x(an) >= 0 && x(an) < antennas.cols && //
-                               y(an) >= 0 && y(an) < antennas.rows;
-                    });
-
-    return in_bound_antinodes;
+        res.merge(
+            gen_antinodes_inner(get<1>(a), antennas.rows, antennas.cols, resonance));
+    return res;
 }
 
 int64_t
@@ -101,7 +133,7 @@ int64_t
 part2 (const string &in)
 {
     const auto antennas { parse_antennas(in) };
-    return static_cast<int64_t>(gen_antinodes(antennas).size());
+    return static_cast<int64_t>(gen_antinodes(antennas, true).size());
 }
 
 }
