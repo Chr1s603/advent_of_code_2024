@@ -105,7 +105,6 @@ gen_antinodes_inner (const vector<pos_t> &antenna_positions, const int64_t rows,
         {
             const pos_t pos_a { antenna_positions[i] };
             const pos_t pos_b { antenna_positions[j] };
-            const pos_t dist { x(pos_b) - x(pos_a), y(pos_b) - y(pos_a) };
             res.merge(gen_resonance_nodes(pos_a, pos_b, rows, cols, resonance));
         }
 
