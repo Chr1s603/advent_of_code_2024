@@ -44,7 +44,7 @@ template <typename Day>
         { Day::part1(Day::parse(text)) };
         { Day::part2(Day::parse(text)) };
         { Day::expected() };
-        { Day::name() } -> std::convertible_to<std::string_view>;
+        { Day::name } -> std::convertible_to<std::string_view>;
     }
 run_result
 run_text_impl (sv text)
@@ -76,12 +76,12 @@ template <typename Day>
         { Day::part1(Day::parse(text)) };
         { Day::part2(Day::parse(text)) };
         { Day::expected() };
-        { Day::name() } -> std::convertible_to<std::string_view>;
+        { Day::name } -> std::convertible_to<std::string_view>;
     }
 consteval runner
 make_runner ()
 {
-    return runner{Day::number, Day::name(), &run_text_impl<Day>};
+    return runner{Day::number, Day::name, &run_text_impl<Day>};
 }
 
 inline str

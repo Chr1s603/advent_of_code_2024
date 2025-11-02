@@ -8,10 +8,7 @@ export namespace day08 {
 struct Day08
 {
     static constexpr s64 number = 8;
-    static consteval sv  name ()
-    {
-        return "Day 08: Example";
-    }
+    static constexpr sv  name{"Day 08: Example"};
 
     using Pair   = pair<s64, s64>;
     using Parsed = vec<Pair>;

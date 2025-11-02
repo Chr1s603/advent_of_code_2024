@@ -1,68 +1,55 @@
-// src/days/day_01.cppm
 export module aoc.day01;
 
 import std;
-import util.types;
+import util.enumerable;
 import util.parse;
+import util.types;
 
 export namespace day01 {
 
 struct Day01
 {
     static constexpr s64 number = 1;
-
-    static consteval sv name ()
-    {
-        return "Day 01: Historian Hysteria";
-    }
+    static constexpr sv  name{"Day 01: Historian Hysteria"};
 
     using LocationPair = pair<s64, s64>;
     using Parsed       = vec<LocationPair>;
 
-    // Parse input into left/right location ID pairs
+    // Input is the research result(a list) from each of the two groups of historians:
+    // List0_Index0 List1Index0
+    // List0_Index1 List1Index1
+    //      ...        ...
     static Parsed parse (sv input)
     {
         return util::parse::parse_whitespace_pairs<s64>(input);
     }
 
-    // Extract left or right location IDs
-    static vec<s64> left_list (const Parsed& pairs)
-    {
-        auto view = pairs | std::ranges::views::transform([] (auto& p) { return p.first; });
-        return vec<s64>(view.begin(), view.end());
-    }
-
-    static vec<s64> right_list (const Parsed& pairs)
-    {
-        auto view = pairs | std::ranges::views::transform([] (auto& p) { return p.second; });
-        return vec<s64>(view.begin(), view.end());
-    }
-
-    // Part 1: total distance between left/right lists after sorting
+    // Part 1: Total distance between left/right lists after sorting.
     static s64 part1 (const Parsed& pairs)
     {
-        auto left  = left_list(pairs);
-        auto right = right_list(pairs);
+        auto left  = util::enumerable::get_nth_of_each_element<0>(pairs);
+        auto right = util::enumerable::get_nth_of_each_element<1>(pairs);
 
+        // "Pair up the smallest number in the left list with the smallest number in the
+        // right list, then the second-smallest left number with the second-smallest
+        // right number, and so on." -> Straight up sorting.
         std::ranges::sort(left);
         std::ranges::sort(right);
 
         s64 total_distance = 0;
         for (u64 i = 0; i < std::min(left.size(), right.size()); ++i)
-        {
             total_distance += std::abs(left[i] - right[i]);
-        }
 
         return total_distance;
     }
 
-    // Part 2: similarity score by multiplying left IDs by occurrences in right list
+    // Part 2: Similarity score by multiplying left IDs by occurrences in right list.
     static s64 part2 (const Parsed& pairs)
     {
-        auto left  = left_list(pairs);
-        auto right = right_list(pairs);
+        auto left  = util::enumerable::get_nth_of_each_element<0>(pairs);
+        auto right = util::enumerable::get_nth_of_each_element<1>(pairs);
 
-        // Frequency map to drop complexity and improve runtime
+        // Store the frequency / occurence-count of each location on the right:
         std::unordered_map<s64, s64> freq;
         for (auto r : right)
             freq[r]++;

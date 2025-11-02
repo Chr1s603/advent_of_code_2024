@@ -15,16 +15,12 @@ add_custom_command(
     OUTPUT ${STD_PCM}
     COMMAND ${CMAKE_CXX_COMPILER}
         -std=c++26 -stdlib=libc++
-        -I/usr/include/c++/v1              # 👈 add this
+        -I/usr/include/c++/v1
         --precompile /usr/share/libc++/v1/std.cppm
         -o ${STD_PCM}
     COMMENT "Precompiling libc++ std module"
 )
-
-
-add_custom_target(precompile_std
-        DEPENDS ${STD_PCM}
-)
+add_custom_target(precompile_std DEPENDS ${STD_PCM})
 
 # ------------------------
 # Common compile options
@@ -48,6 +44,7 @@ target_sources(aoc_common
         FILE_SET aoc_common_modules TYPE CXX_MODULES FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/types.cppm"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/console.cppm"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/enum.cppm"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/parse.cppm"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/runner.cppm"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/io.cppm")
