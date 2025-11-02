@@ -2,109 +2,91 @@ export module aoc.day02;
 
 import std;
 import util.types;
+import util.parse;
 
 export namespace day02 {
 
 struct Day02
 {
     static constexpr s64 number = 2;
-    static constexpr sv  name{"Day 02: Example"};
+    static constexpr sv  name{"Day 02: Red-Nosed Reports"};
 
-    using Pair   = pair<s64, s64>;
-    using Parsed = vec<Pair>;
+    using Report  = vec<s64>;
+    using Reports = vec<Report>;
 
-    // Simple whitespace parser for pairs of integers
-    static Parsed parse (sv s)
+    static Reports parse (csv s)
     {
-        Parsed      out;
-        const char* p = s.data();
-        const char* e = s.data() + s.size();
+        const auto reports = util::parse::split(s, sv("\n"))
+                             | std::views::filter([] (sv line) { return !line.empty(); })
+                             | std::ranges::to<vec<sv>>();
+        return reports //
+               | std::views::transform([] (sv line) {
+                     return util::parse::split(line, sv(" ")) //
+                            | util::parse::to_numbers<s64>()  //
+                            | std::ranges::to<vec<s64>>();
+                 })
+               | std::ranges::to<vec<vec<s64>>>();
+    }
 
-        while (p < e)
+    static bool is_safe (const Report& report)
+    {
+        s64        last          = report[0];
+        const bool is_increasing = report[0] < report[1];
+        for (s64 sample_idx = 1; sample_idx < cs64(report.size()); sample_idx++)
         {
-            while (p < e && std::isspace(static_cast<unsigned char>(*p)))
-                ++p;
-            if (p >= e)
-                break;
+            cs64 current = report[sample_idx];
+            if (const auto diff = std::abs(current - last); diff == 0 || diff > 3)
+                return false;
+            if (is_increasing && (current < last))
+                return false;
+            if (!is_increasing && (current > last))
+                return false;
+            last = current;
+        }
+        return true;
+    }
 
-            s64 a{}, b{};
-            auto [q1, ec1] = std::from_chars(p, e, a);
-            if (ec1 != std::errc{})
-                break;
-            p = q1;
+    static bool can_be_safe_with_dampener (const Report& report)
+    {
+        if (is_safe(report))
+            return true; // already safe
 
-            while (p < e && std::isspace(static_cast<unsigned char>(*p)))
-                ++p;
-            if (p >= e)
-                break;
+        // Try removing each element in turn
+        for (s64 i = 0; i < report.size(); ++i)
+        {
+            Report copy;
+            copy.reserve(report.size() - 1);
+            for (s64 j = 0; j < report.size(); ++j)
+                if (i != j)
+                    copy.push_back(report[j]);
 
-            auto [q2, ec2] = std::from_chars(p, e, b);
-            if (ec2 != std::errc{})
-                break;
-            p = q2;
-
-            out.emplace_back(a, b);
+            if (is_safe(copy))
+                return true;
         }
 
-        return out;
+        return false;
     }
 
-    // Helper to extract first or second elements
-    static vec<s64> project (const Parsed& v, bool first)
+    // Part 1: Count of safe reports.
+    static s64 part1 (const Reports& in)
     {
-        vec<s64> out;
-        out.reserve(v.size());
-        for (const auto& p : v)
-        {
-            out.push_back(first ? p.first : p.second);
-        }
-        return out;
+        const auto safe_flags
+            = in | std::views::transform([] (const Report& line) { return is_safe(line); });
+        return std::ranges::count(safe_flags, true);
     }
 
-    // Helper to combine two vectors element-wise
-    static vec<Pair> combine (const vec<s64>& a, const vec<s64>& b)
+    // Part 2: Count of safe reports with up to 1 erased number.
+    static s64 part2 (const Reports& in)
     {
-        vec<Pair> out;
-        out.reserve(std::min(a.size(), b.size()));
-        for (u64 i = 0; i < out.capacity(); ++i)
-            out.emplace_back(a[i], b[i]);
-
-        return out;
-    }
-
-    // Part 1: sum of absolute differences after sorting
-    static s64 part1 (const Parsed& in)
-    {
-        auto first_values  = project(in, true);
-        auto second_values = project(in, false);
-
-        std::sort(first_values.begin(), first_values.end());
-        std::sort(second_values.begin(), second_values.end());
-
-        s64  res      = 0;
-        auto combined = combine(first_values, second_values);
-        for (const auto& [f, s] : combined)
-            res += std::abs(f - s);
-
-        return res;
-    }
-
-    // Part 2: sum of first_values multiplied by occurrences in second_values
-    static s64 part2 (const Parsed& in)
-    {
-        auto first_values  = project(in, true);
-        auto second_values = project(in, false);
-
-        s64 res = 0;
-        for (const auto& f : first_values)
-            res += f * std::count(second_values.begin(), second_values.end(), f);
-
-        return res;
+        const auto safe_flags = in | std::views::transform([] (const Report& line) {
+                                    return can_be_safe_with_dampener(line);
+                                });
+        return std::ranges::count(safe_flags, true);
     }
 
     static constexpr pair<s64, s64> expected ()
     {
-        return {1882714, 19437052}; // replace with real answers
+        return {236, 308}; // replace with real answers
     }
 };
 } // namespace day01

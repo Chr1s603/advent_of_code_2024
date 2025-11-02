@@ -5,6 +5,43 @@ import util.types;
 
 export namespace util::parse {
 
+template <typename T = s64>
+auto
+to_numbers ()
+{
+    return std::views::transform([] (std::string_view token) {
+        T value{};
+        std::from_chars(token.data(), token.data() + token.size(), value);
+        return value;
+    });
+}
+
+inline vec<std::string_view>
+split (std::string_view s, std::string_view delimiter = " ")
+{
+    vec<std::string_view> out;
+    if (delimiter.empty())
+    {
+        out.push_back(s);
+        return out;
+    }
+
+    std::size_t pos = 0;
+    while (pos <= s.size())
+    {
+        std::size_t next = s.find(delimiter, pos);
+        if (next == std::string_view::npos)
+        {
+            out.emplace_back(s.substr(pos));
+            break;
+        }
+        out.emplace_back(s.substr(pos, next - pos));
+        pos = next + delimiter.size();
+    }
+
+    return out;
+}
+
 template <typename T>
 inline vec<T>
 parse_whitespace_numbers (sv s)
